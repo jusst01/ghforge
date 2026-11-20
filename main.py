@@ -23,6 +23,14 @@ import time
 import urllib.error
 import urllib.request
 
+# Bootstrap: Ensure script directory is in sys.path
+script_dir = os.path.dirname(os.path.abspath(__file__))
+if script_dir not in sys.path:
+    sys.path.insert(0, script_dir)
+
+# Global proxy-free opener
+_no_proxy_opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+
 try:  # package import
     from forge.httpd import make_server
     from forge.store import Store
@@ -51,7 +59,7 @@ def _post_json(url: str, payload: dict, timeout: float = 5.0) -> bool:
         headers={"Content-Type": "application/json", "Accept": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(request, timeout=timeout) as response:
+    with _no_proxy_opener.open(request, timeout=timeout) as response:
         response.read()
     return True
 
@@ -76,7 +84,7 @@ def poll_done(env_url: str, server, interval: float = DONE_ERROR_SLEEP_SECONDS) 
     while True:
         try:
             request = urllib.request.Request(url, headers={"Accept": "application/json"})
-            with urllib.request.urlopen(request, timeout=DONE_TIMEOUT_SECONDS) as response:
+            with _no_proxy_opener.open(request, timeout=DONE_TIMEOUT_SECONDS) as response:
                 raw = response.read()
             try:
                 answer = json.loads(raw.decode("utf-8") or "{}")

@@ -458,7 +458,7 @@ def walk_closure(
                 queue.append((parent_oid, gen + 1))
 
     # Collect tree and blob OIDs from included commits and other tips
-    included_oids = set(included_commits) | set(tips) | other_tips
+    included_oids = set(included_commits) | other_tips
     visited_trees = set()
 
     def walk_tree(tree_oid: str):

@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import parse_qs, urlencode, urlsplit
 
 try:  # package imports
-    from forge import gitadv, gitfetch, gitpush, graphql, mcp, rest
+    from forge import gitadv, gitfetch, gitpush, graphql, mcp, rest, pulls as _pulls_mod
     from forge.store import Pull
 except ImportError:  # pragma: no cover - flat import when forge/ is on sys.path
     import gitadv  # type: ignore
@@ -33,6 +33,7 @@ except ImportError:  # pragma: no cover - flat import when forge/ is on sys.path
     import graphql  # type: ignore
     import mcp  # type: ignore
     import rest  # type: ignore
+    import pulls as _pulls_mod  # type: ignore
     from store import Pull  # type: ignore
 
 __all__ = ["ForgeServer", "ForgeHandler", "make_server", "serve_forever"]
@@ -83,10 +84,10 @@ def _pulls_route(
         if method == "GET":
             wanted = query.get("state", "open")
             with store.lock:
-                pulls = sorted(repo.pulls.values(), key=lambda p: p.number, reverse=True)
+                pull_list = sorted(repo.pulls.values(), key=lambda p: p.number, reverse=True)
                 return 200, [
                     mcp.make_pull_obj(store, repo, pull, base_url)
-                    for pull in pulls
+                    for pull in pull_list
                     if wanted in ("all", "any") or pull.state == wanted
                 ]
         if method == "POST":
@@ -194,7 +195,7 @@ def _pulls_route(
         return 404, {"message": "Not Found"}
 
     if tail == ["files"] and method == "GET":
-        return 200, []
+        return 200, _pulls_mod.pr_files(store, owner, repo, pull)
 
     if tail == ["commits"] and method == "GET":
         return 200, []

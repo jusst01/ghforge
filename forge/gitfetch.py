@@ -235,7 +235,8 @@ def _select_pack(
         elif obj_type == "commit":
             commit = Commit.parse(payload)
             stack.append(commit.tree)
-            stack.extend(commit.parents)
+            if cur not in cut:
+                stack.extend(commit.parents)
         elif obj_type == "tag":
             stack.append(Tag.parse(payload).object)
 

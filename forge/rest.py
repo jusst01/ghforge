@@ -501,7 +501,7 @@ def handle_rest(store: Any, method: str, seg: Any, query: Any, body: Any, base_u
 
                     auth_name, auth_email, auth_date = parse_ident_bytes(c_obj.author)
                     comm_name, comm_email, comm_date = parse_ident_bytes(c_obj.committer)
-                    msg_str = c_obj.message.decode("utf-8", errors="replace")
+                    msg_str = c_obj.message.decode("utf-8", errors="replace").rstrip("\n")
 
                     commits_list.append({
                         "sha": curr_oid,
@@ -675,12 +675,10 @@ def handle_rest(store: Any, method: str, seg: Any, query: Any, body: Any, base_u
         if sub == ["issues"]:
             if method == "GET":
                 state_filter = q.get("state", "open")
-                issues_list = []
-                for issue in sorted(repo.issues.values(), key=lambda i: i.number, reverse=True):
-                    if state_filter != "all" and issue.state != state_filter:
-                        continue
-                    issues_list.append(make_issue_obj(store, repo, issue, base_url))
-                return 200, issues_list
+                direction = q.get("direction", "desc")
+                issues = [i for i in repo.issues.values() if state_filter == "all" or i.state == state_filter]
+                issues.sort(key=lambda i: i.created_at, reverse=(direction == "desc"))
+                return 200, [make_issue_obj(store, repo, issue, base_url) for issue in issues]
             elif method == "POST":
                 title = req_body.get("title")
                 if not title:
